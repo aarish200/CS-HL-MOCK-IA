@@ -1,23 +1,6 @@
 import streamlit as st
 import pandas as pd
 import os
-from cryptography.fernet import Fernet
-
-def generate_key():
-    key = Fernet.generate_key()
-    with open("secret.key", "wb") as key_file:
-        key_file.write(key)
-    return key
-
-def load_key():
-    return open("secret.key", "rb").read()
-
-if not os.path.exists("secret.key"):
-    key = generate_key()
-else:
-    key = load_key()
-
-cipher_suite = Fernet(key)
 
 # Initialize CSV files if they don't exist
 if not os.path.exists("tables.csv"):
@@ -126,7 +109,7 @@ elif menu_option == "Admin":
         if st.button("Login"):
             if username in admin['Username'].values:
                 stored_password = admin[admin['Username'] == username]['Password'].values[0]
-                if cipher_suite.decrypt(stored_password.encode()).decode() == password:
+                if stored_password == password:
                     st.session_state.logged_in = True
                     st.success("Login successful!")
                 else:
@@ -210,8 +193,7 @@ elif menu_option == "Register Admin":
         if new_username in admin['Username'].values:
             st.error("Username already exists. Please choose a different username.")
         else:
-            encrypted_password = cipher_suite.encrypt(new_password.encode()).decode()
-            new_admin = pd.DataFrame({'Username': [new_username], 'Password': [encrypted_password]})
+            new_admin = pd.DataFrame({'Username': [new_username], 'Password': [new_password]})
             admin = pd.concat([admin, new_admin])
             admin.to_csv("admin.csv", index=False)
             st.success(f"Admin '{new_username}' registered successfully!")
